@@ -1,82 +1,71 @@
-# Inbox Pilot
+# Email Checker
 
-A local desktop organizer for multiple Outlook / Microsoft 365 accounts. It uses
-Microsoft Graph for mailbox access and Ollama for classification.
+A Windows desktop app that organizes **Microsoft 365** and **Gmail** inboxes with local AI.
+
+It classifies unread mail into folders you define, keeps credentials encrypted on disk, and can notify you from the tray when new messages are processed.
+
+## Features
+
+- Connect multiple Outlook and Gmail accounts
+- Classify with **Ollama** (local) or **OpenRouter**
+- Dry-run first: report decisions without moving mail
+- System tray, floating window, and Windows notifications
+- Optional Slack incoming-webhook run summaries
+- Optional Azure relay for push mail, with backup polling
 
 ## Safety defaults
 
-- The first run is a **dry run**: it classifies and reports without moving mail.
-- Only unread Inbox messages are processed.
-- The model can choose only from your configured folder allow-list.
-- Low-confidence or invalid results go to `Review`.
-- Organized mail stays unread unless you explicitly enable **Mark as read**.
-- Ollama receives only sender, subject, received time, and `bodyPreview`.
-- Reports contain metadata and the AI decision. AI summaries/reasons can repeat
-  sensitive text from the message preview, so protect and periodically remove
-  old report files.
-- Microsoft refresh tokens are stored locally using Windows DPAPI encryption.
-- Ollama API keys and Slack webhook URLs are also stored with Windows DPAPI.
+- The first run is a **dry run**
+- Only unread Inbox messages are processed unless you change that
+- The model can choose only from your folder allow-list
+- Low-confidence results go to `Review`
+- Mail stays unread unless you enable **Mark as read**
+- Classifiers receive sender, subject, received time, and a short preview — not full bodies
+- Secrets (tokens, API keys, Slack webhook) are stored with Windows DPAPI
 
-## Microsoft setup
+`Mail.ReadWrite` is required for Outlook so messages can be moved. Email Checker does not call delete or send endpoints. Do not add `Mail.Send`.
 
-Create an Entra app registration and configure:
+## Requirements
 
-1. **Authentication → Allow public client flows: Yes**
-2. **API permissions → Microsoft Graph → Delegated permissions**
-3. Add `Mail.ReadWrite`
+- Windows 10 or later
+- [Node.js 22+](https://nodejs.org/)
+- [Ollama](https://ollama.com/) if you classify locally
 
-`Mail.ReadWrite` permits reading, creating, moving, updating, and deleting mail.
-Inbox Pilot intentionally never calls a delete endpoint. The permission does
-**not** permit sending mail; do not add `Mail.Send`.
+## Run locally
 
-Copy the Application (client) ID into the GUI's **Accounts** page. Existing
-accounts originally authorized with `Mail.Read` should be connected again so
-Microsoft can request consent for `Mail.ReadWrite`.
-
-## Run the GUI on Windows
-
-```bat
-.venv\Scripts\activate.bat
-pip install -r requirements.txt
-python organizer_gui.py
+```powershell
+npm install
+npm run dev
 ```
 
-Then:
+Then in the app:
 
-1. Save the Microsoft client ID.
-2. Add each Outlook account and select the inboxes to process.
-3. On **AI & Rules**, enter the Ollama URL (default:
-   `http://localhost:11434`), load models, choose one, and edit the prompt.
-4. Keep **Dry run** on and run the organizer.
-5. Review the CSV/JSON report.
-6. Disable dry-run only after the decisions look correct.
+1. Add a Microsoft or Gmail account on **Accounts**
+2. Choose a model and folders on **AI & Rules**
+3. Keep **Dry run** on and use **Run once**
+4. Review the JSON/CSV report
+5. Turn off dry-run only after the decisions look correct
 
-Ollama is accessed through its HTTP API using the official Python client.
-Local Ollama does not require a username, password, or API key. If a secured
-remote Ollama-compatible endpoint expects a Bearer token, enter it in the
-optional API key field.
-
-To deliver run summaries to Slack, create a Slack Incoming Webhook, paste its
-URL into **AI & Rules → Slack report delivery**, send a test, and enable the
-report switch. The webhook URL determines the destination channel.
-
-The main window uses a dark custom title bar. Its status icon hides the main
-window and opens a small always-on-top status bubble with moved, preview, and
-failed badges. Double-click the bubble or use its restore button to reopen the
-main window.
-
-## Organization behavior
-
-Inbox Pilot creates a parent folder (default `AI Organized`) and one child
-folder per configured destination. A successful live run moves each message
-into the selected child folder. If **Mark as read** is enabled, that update is
-performed only after the move succeeds.
-
-The **Automatic** control runs the organizer on the configured interval. For
-true Microsoft Graph push notifications, the existing CLI webhook mode remains:
-
-```bat
-python email_watcher.py watch
+```powershell
+npm test
+npm run typecheck
 ```
 
-That webhook mode requires a public HTTPS URL. The GUI interval mode does not.
+To build a Windows installer:
+
+```powershell
+npm run dist
+```
+
+## Push mail (optional)
+
+The desktop app does not open a public webhook. Production push delivery uses an Azure Functions relay. See:
+
+- [Azure relay contract](docs/azure-relay-contract.md)
+- [Azure and Google push setup](docs/setup-azure-google-push.md)
+
+Without a relay, automatic monitoring still works via scheduled backup polling.
+
+## License
+
+MIT
