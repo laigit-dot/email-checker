@@ -1,0 +1,6 @@
+msal
+msal-extensions
+requests
+python-dotenv
+customtkinter
+ollama

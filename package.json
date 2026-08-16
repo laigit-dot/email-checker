@@ -1,0 +1,106 @@
+{
+  "name": "email-checker",
+  "version": "1.0.0",
+  "description": "A secure desktop email organizer for Microsoft 365 and Gmail accounts.",
+  "productName": "Email Checker",
+  "main": "dist-electron/main/index.js",
+  "workspaces": [
+    "relay"
+  ],
+  "scripts": {
+    "dev": "tsx scripts/dev.ts",
+    "dev:renderer": "vite",
+    "start": "electron .",
+    "build": "npm run build:renderer && npm run build:main && npm run build:preload",
+    "build:renderer": "vite build",
+    "build:main": "tsc --project tsconfig.main.json",
+    "build:preload": "vite build --config vite.preload.config.ts",
+    "test": "vitest run --exclude \"relay/**\"",
+    "test:watch": "vitest --exclude \"relay/**\"",
+    "typecheck": "tsc --noEmit --project tsconfig.renderer.json && tsc --noEmit --project tsconfig.main.json && tsc --noEmit --project tsconfig.preload.json && tsc --noEmit --project tsconfig.node.json",
+    "relay:build": "npm run build --workspace relay",
+    "relay:typecheck": "npm run typecheck --workspace relay",
+    "relay:test": "npm run test --workspace relay",
+    "relay:verify": "npm run verify --workspace relay",
+    "verify": "npm run test && npm run typecheck && npm run build && npm run relay:verify",
+    "pack": "npm run build && electron-builder --dir",
+    "dist": "npm run build && electron-builder --win nsis"
+  },
+  "keywords": [
+    "electron",
+    "email",
+    "organizer"
+  ],
+  "author": "",
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "@azure/msal-node": "^5.5.0",
+    "@azure/msal-node-extensions": "^5.3.5",
+    "@fontsource-variable/outfit": "^5.3.0",
+    "@fontsource-variable/vazirmatn": "^5.3.0",
+    "googleapis": "^174.0.1",
+    "lucide-react": "^1.31.0",
+    "ollama": "^0.6.3",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "ws": "^8.21.3",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/node": "^26.2.0",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@types/ws": "^8.18.1",
+    "@vitejs/plugin-react": "^6.0.5",
+    "daisyui": "^5.7.16",
+    "electron": "^43.3.0",
+    "electron-builder": "^26.15.3",
+    "tailwindcss": "^4.3.3",
+    "tsx": "^4.23.12",
+    "typescript": "^7.0.2",
+    "vite": "^8.2.1",
+    "vitest": "^4.1.10"
+  },
+  "build": {
+    "appId": "com.codeshop.emailchecker",
+    "productName": "Email Checker",
+    "asar": true,
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*",
+      "build/icon.ico",
+      "build/icon.png",
+      "package.json"
+    ],
+    "directories": {
+      "buildResources": "build",
+      "output": "release"
+    },
+    "extraResources": [
+      {
+        "from": "build/icon.ico",
+        "to": "icon.ico"
+      },
+      {
+        "from": "build/icon.png",
+        "to": "icon.png"
+      }
+    ],
+    "icon": "build/icon.ico",
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "artifactName": "${productName}-Setup-${version}.${ext}"
+    }
+  }
+}

@@ -1,0 +1,22 @@
+.venv/
+.env
+.msal_token_cache.bin
+.msal_token_cache.legacy-migration
+.email_organizer_settings.json
+reports/
+__pycache__/
+*.pyc
+
+# Node / Electron
+node_modules/
+dist/
+dist-electron/
+release/
+coverage/
+*.tsbuildinfo
+*.log
+
+# Azure Functions relay
+relay/dist/
+relay/coverage/
+relay/local.settings.json

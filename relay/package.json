@@ -1,0 +1,30 @@
+{
+  "name": "@email-checker/relay",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/functions/*.js",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "prestart": "npm run build",
+    "start": "func start",
+    "typecheck": "tsc --noEmit --project tsconfig.json && tsc --project tsconfig.test.json",
+    "test": "vitest run",
+    "verify": "npm run test && npm run typecheck && npm run build"
+  },
+  "dependencies": {
+    "@azure/data-tables": "^13.3.2",
+    "@azure/functions": "^4.16.2",
+    "@azure/web-pubsub": "^1.2.0",
+    "google-auth-library": "^10.5.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
+  }
+}

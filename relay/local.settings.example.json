@@ -1,0 +1,14 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "<storage-connection-string>",
+    "FUNCTIONS_WORKER_RUNTIME": "node",
+    "RELAY_API_KEY": "<long-random-relay-api-key>",
+    "RELAY_REGISTRATION_TABLE": "RelayRegistrations",
+    "WEB_PUBSUB_CONNECTION_STRING": "<web-pubsub-connection-string>",
+    "WEB_PUBSUB_HUB": "email",
+    "WEB_PUBSUB_TOKEN_TTL_MINUTES": "60",
+    "GOOGLE_PUBSUB_AUDIENCE": "https://<function-app>.azurewebsites.net/api/gmail/pubsub",
+    "GOOGLE_PUBSUB_SERVICE_ACCOUNT": "<pubsub-push-service-account>@<project-id>.iam.gserviceaccount.com"
+  }
+}
