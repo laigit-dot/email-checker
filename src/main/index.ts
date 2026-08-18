@@ -711,7 +711,10 @@ async function createRuntime(userDataPath: string): Promise<RuntimeServices> {
           const result = await engine.run(accounts, settings, signal);
           latestSummary = result.summary;
           signal.throwIfAborted();
-          await reports.write(result.records);
+          await reports.write(result.records, result.summary);
+          // Re-publish completion after the report is durable so renderers can
+          // refresh archive-backed insights for automatic runs.
+          state.updateRun(state.getSnapshot().run);
           signal.throwIfAborted();
           const slackWebhook = await secretStore.get("slack-webhook");
           signal.throwIfAborted();

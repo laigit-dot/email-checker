@@ -56,6 +56,7 @@ import {
   resolveSelectedAccountIds,
   toggleSelectedAccountId,
 } from "../shared/accountSelection";
+import { computeStatusCounts } from "../domain/emailStatus";
 import type {
   DeviceCodeNotice,
   EmailRecord,
@@ -74,6 +75,8 @@ import type {
 import type { WindowRoute } from "./windowRoute";
 import {
   formatRelativeTime,
+  findUrgentOrganizedEmails,
+  getReportRunEmails,
   getStatusChips,
   METRICS,
   providerLabel,
@@ -96,6 +99,14 @@ type RadialProgressStyle = CSSProperties & {
 type StaggerStyle = CSSProperties & {
   "--item-index": number;
 };
+type SignalBarStyle = CSSProperties & {
+  "--bar-height": string;
+  "--bar-phase": number;
+};
+
+const SIGNAL_BAR_HEIGHTS = [
+  22, 28, 36, 48, 62, 76, 88, 88, 76, 62, 48, 36, 28, 22,
+] as const;
 
 const NAV_ITEMS: ReadonlyArray<{
   id: MainSection;
@@ -790,76 +801,86 @@ function IntelligenceHero({
           </div>
         </div>
         <figure className="signal-visual" aria-hidden="true">
-        <div className="signal-visual__glow signal-visual__glow--a" />
-        <div className="signal-visual__glow signal-visual__glow--b" />
-        <div className="signal-visual__glow signal-visual__glow--c" />
+        <div className="signal-visual__stage">
+          <div className="signal-visual__glow signal-visual__glow--a" />
+          <div className="signal-visual__glow signal-visual__glow--b" />
+          <div className="signal-visual__glow signal-visual__glow--c" />
 
-        <div className="signal-visual__orbit signal-visual__orbit--outer">
-          <span className="signal-visual__node signal-visual__node--a" />
-          <span className="signal-visual__node signal-visual__node--b" />
-        </div>
-        <div className="signal-visual__orbit signal-visual__orbit--inner">
-          <span className="signal-visual__node signal-visual__node--c" />
-        </div>
-
-        <div className="signal-visual__core">
-          <span className="signal-visual__ring signal-visual__ring--pulse" />
-          <span className="signal-visual__ring signal-visual__ring--spin" />
-          <span className="signal-visual__ring signal-visual__ring--spin-reverse" />
-          <div className="signal-visual__orb">
-            <Activity size={28} strokeWidth={2.25} />
+          <div className="signal-visual__orbit signal-visual__orbit--outer">
+            <span className="signal-visual__node signal-visual__node--a" />
+            <span className="signal-visual__node signal-visual__node--b" />
           </div>
-        </div>
+          <div className="signal-visual__orbit signal-visual__orbit--inner">
+            <span className="signal-visual__node signal-visual__node--c" />
+          </div>
 
-        <div className="signal-visual__bars" aria-hidden="true">
-          {Array.from({ length: 14 }, (_, index) => (
-            <span
-              key={index}
-              className="signal-visual__bar"
-              style={{ "--bar-index": index } as CSSProperties}
+          <div className="signal-visual__core">
+            <span className="signal-visual__ring signal-visual__ring--pulse" />
+            <span className="signal-visual__ring signal-visual__ring--spin" />
+            <span className="signal-visual__ring signal-visual__ring--spin-reverse" />
+            <div className="signal-visual__orb">
+              <Activity size={28} strokeWidth={2.25} />
+            </div>
+          </div>
+
+          <div className="signal-visual__bars" aria-hidden="true">
+            {SIGNAL_BAR_HEIGHTS.map((height, index) => (
+              <span
+                key={index}
+                className="signal-visual__bar"
+                style={
+                  {
+                    "--bar-height": `${height}%`,
+                    "--bar-phase": Math.min(
+                      index,
+                      SIGNAL_BAR_HEIGHTS.length - 1 - index,
+                    ),
+                  } as SignalBarStyle
+                }
+              />
+            ))}
+          </div>
+
+          <svg
+            className="signal-visual__wave"
+            viewBox="0 0 360 110"
+            preserveAspectRatio="none"
+          >
+            <defs>
+              <linearGradient id="signal-wave-fill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#059669" stopOpacity="0.45" />
+                <stop offset="100%" stopColor="#059669" stopOpacity="0" />
+              </linearGradient>
+              <linearGradient id="signal-wave-stroke" x1="0" x2="1">
+                <stop offset="0%" stopColor="#059669" stopOpacity="0" />
+                <stop offset="22%" stopColor="#059669" />
+                <stop offset="58%" stopColor="#2563eb" />
+                <stop offset="100%" stopColor="#e11d48" stopOpacity="0" />
+              </linearGradient>
+            </defs>
+            <path
+              className="signal-visual__wave-fill"
+              d="M0 78 C34 70 52 54 78 58 S124 86 152 54 S204 18 230 52 S276 88 304 54 S336 40 360 28 V110 H0 Z"
+              fill="url(#signal-wave-fill)"
             />
-          ))}
+            <path
+              className="signal-visual__wave-line signal-visual__wave-line--soft"
+              d="M0 82 C40 76 58 62 84 66 S132 92 160 62 S210 28 238 58 S286 86 316 58 S342 44 360 34"
+              fill="none"
+              stroke="url(#signal-wave-stroke)"
+              strokeWidth="7"
+              strokeLinecap="round"
+            />
+            <path
+              className="signal-visual__wave-line"
+              d="M0 74 C36 68 54 50 80 56 S126 84 154 50 S206 12 232 48 S278 80 306 48 S338 34 360 24"
+              fill="none"
+              stroke="url(#signal-wave-stroke)"
+              strokeWidth="2.6"
+              strokeLinecap="round"
+            />
+          </svg>
         </div>
-
-        <svg
-          className="signal-visual__wave"
-          viewBox="0 0 360 110"
-          preserveAspectRatio="none"
-        >
-          <defs>
-            <linearGradient id="signal-wave-fill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#8fb8ad" stopOpacity="0.34" />
-              <stop offset="100%" stopColor="#8fb8ad" stopOpacity="0" />
-            </linearGradient>
-            <linearGradient id="signal-wave-stroke" x1="0" x2="1">
-              <stop offset="0%" stopColor="#8bb6ae" stopOpacity="0" />
-              <stop offset="22%" stopColor="#6f978c" />
-              <stop offset="58%" stopColor="#8eb3c5" />
-              <stop offset="100%" stopColor="#d7a9b2" stopOpacity="0" />
-            </linearGradient>
-          </defs>
-          <path
-            className="signal-visual__wave-fill"
-            d="M0 78 C34 70 52 54 78 58 S124 86 152 54 S204 18 230 52 S276 88 304 54 S336 40 360 28 V110 H0 Z"
-            fill="url(#signal-wave-fill)"
-          />
-          <path
-            className="signal-visual__wave-line signal-visual__wave-line--soft"
-            d="M0 82 C40 76 58 62 84 66 S132 92 160 62 S210 28 238 58 S286 86 316 58 S342 44 360 34"
-            fill="none"
-            stroke="url(#signal-wave-stroke)"
-            strokeWidth="7"
-            strokeLinecap="round"
-          />
-          <path
-            className="signal-visual__wave-line"
-            d="M0 74 C36 68 54 50 80 56 S126 84 154 50 S206 12 232 48 S278 80 306 48 S338 34 360 24"
-            fill="none"
-            stroke="url(#signal-wave-stroke)"
-            strokeWidth="2.6"
-            strokeLinecap="round"
-          />
-        </svg>
 
         <figcaption className="signal-visual__caption">
           <span className="signal-visual__live-dot" />
@@ -2494,19 +2515,184 @@ function RulesSection({
 
 function ReportsSection({
   onOpen,
+  onOpenEmail,
   reports,
+  status,
 }: {
   onOpen: (name: string) => void;
+  onOpenEmail: (email: EmailRecord) => void;
   reports: ReportSummary[];
+  status: StatusSnapshot | null;
 }) {
+  const archivedReport = reports.find(
+    (report) => report.format === "json" && report.insights,
+  );
+  const archivedInsights = archivedReport?.insights;
+  const latestSummary = archivedInsights?.run ?? status?.run.summary;
+  const insightEmails = archivedInsights?.emails ?? status?.emails ?? [];
+  const latestRunEmails = getReportRunEmails(
+    insightEmails,
+    archivedInsights ? archivedInsights.run : status?.run.summary,
+    archivedInsights?.generatedAt ??
+      archivedReport?.createdAt ??
+      status?.run.summary?.finishedAt,
+  );
+  const latestRunCounts = computeStatusCounts(latestRunEmails);
+  const urgentOrganizedEmails = findUrgentOrganizedEmails(latestRunEmails);
+  const processedCount = latestRunEmails.length;
+  const latestRunTime =
+    latestSummary?.finishedAt ??
+    latestSummary?.startedAt ??
+    archivedInsights?.generatedAt ??
+    archivedReport?.createdAt;
+
   return (
     <section className="settings-page">
       <PageIntro
-        copy="JSON and CSV reports are written under the application user-data folder. Only listed report names can be opened."
-        eyebrow="Run archive"
+        copy="See which messages were processed in the latest run, and which of those were filed as urgent."
+        eyebrow="Inbox intelligence"
         icon={FileText}
-        title="Organizer reports"
+        title="Reports"
       />
+      <div className="report-insights">
+        <article className="report-insight-card card glass-panel">
+          <header className="report-insight-card__heading">
+            <span className="report-insight-card__icon" aria-hidden="true">
+              <Activity size={18} />
+            </span>
+            <div>
+              <p className="eyebrow">Latest process</p>
+              <h2>Newly processed emails</h2>
+            </div>
+            <strong className="report-insight-card__total">
+              {processedCount}
+            </strong>
+          </header>
+          {processedCount > 0 ? (
+            <>
+              <p className="report-insight-card__summary">
+                {processedCount} messages processed
+                {latestSummary
+                  ? ` across ${latestSummary.accountCount} ${
+                      latestSummary.accountCount === 1 ? "account" : "accounts"
+                    }`
+                  : ""}
+                {latestRunTime
+                  ? ` · ${formatRelativeTime(latestRunTime)}`
+                  : ""}
+              </p>
+              <dl className="report-insight-stats">
+                <div>
+                  <dt>Organized</dt>
+                  <dd>{latestRunCounts.organized}</dd>
+                </div>
+                <div>
+                  <dt>Urgent</dt>
+                  <dd>{latestRunCounts.urgent}</dd>
+                </div>
+                <div>
+                  <dt>Failed</dt>
+                  <dd>{latestRunCounts.failed}</dd>
+                </div>
+              </dl>
+              <ul
+                className="report-message-list report-message-list--scroll"
+                aria-label="Newly processed messages"
+              >
+                {latestRunEmails.map((email) => (
+                  <li
+                    key={`${email.provider}:${email.accountId}:${email.id}`}
+                  >
+                    <button
+                      className="report-message"
+                      type="button"
+                      onClick={() => onOpenEmail(email)}
+                    >
+                      <span>
+                        <strong>{email.sender}</strong>
+                        <small>
+                          {email.subject}
+                          {email.destinationFolder
+                            ? ` · ${email.destinationFolder}`
+                            : ""}
+                        </small>
+                      </span>
+                      <ExternalLink size={13} aria-hidden="true" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : (
+            <div className="report-insight-empty">
+              <Clock3 size={18} aria-hidden="true" />
+              <span>
+                <strong>No completed process yet</strong>
+                <small>Run the organizer to see what changed.</small>
+              </span>
+            </div>
+          )}
+        </article>
+
+        <article className="report-insight-card card glass-panel">
+          <header className="report-insight-card__heading">
+            <span className="report-insight-card__icon report-insight-card__icon--urgent" aria-hidden="true">
+              <Zap size={18} />
+            </span>
+            <div>
+              <p className="eyebrow">Priority filing</p>
+              <h2>Urgent organized emails</h2>
+            </div>
+            <strong className="report-insight-card__total">
+              {urgentOrganizedEmails.length}
+            </strong>
+          </header>
+          <p className="report-insight-card__summary">
+            These messages were marked urgent and filed in the latest run.
+          </p>
+          {urgentOrganizedEmails.length > 0 ? (
+            <ul
+              className="report-message-list report-message-list--scroll"
+              aria-label="Urgent organized messages"
+            >
+              {urgentOrganizedEmails.map((email) => (
+                <li
+                  key={`${email.provider}:${email.accountId}:${email.id}`}
+                >
+                  <button
+                    className="report-message"
+                    type="button"
+                    onClick={() => onOpenEmail(email)}
+                  >
+                    <span>
+                      <strong>{email.sender}</strong>
+                      <small>
+                        {email.subject}
+                        {email.destinationFolder
+                          ? ` · filed to ${email.destinationFolder}`
+                          : ""}
+                        {" · "}
+                        {providerLabel(email.provider)}
+                        {" · "}
+                        {formatRelativeTime(email.receivedAt)}
+                      </small>
+                    </span>
+                    <ExternalLink size={13} aria-hidden="true" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="report-insight-empty">
+              <Mail size={18} aria-hidden="true" />
+              <span>
+                <strong>No urgent organized emails</strong>
+                <small>Priority filings from the latest run will list here.</small>
+              </span>
+            </div>
+          )}
+        </article>
+      </div>
       <section className="reports-card card glass-panel">
         <header className="section-heading">
           <div>
@@ -2739,6 +2925,8 @@ function MainDashboard({
             <ReportsSection
               reports={reports}
               onOpen={onOpenReport}
+              onOpenEmail={onOpen}
+              status={status}
             />
           ) : section !== "overview" ? (
             <LoadingState />
@@ -3073,6 +3261,25 @@ function DesktopApp({ route }: AppProps) {
       unsubscribe();
     };
   }, [request]);
+
+  useEffect(() => {
+    if (status?.run.phase !== "completed") {
+      return;
+    }
+
+    let active = true;
+    void window.desktop.reports
+      .list()
+      .then((nextReports) => {
+        if (active) {
+          setReports(nextReports);
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [status?.generatedAt, status?.run.phase]);
 
   const refreshRuntime = useCallback(async () => {
     const [configuration, nextAccounts, nextMonitoring, nextReports] =

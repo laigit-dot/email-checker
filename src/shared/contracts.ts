@@ -206,11 +206,18 @@ export interface MonitoringState {
   nextBackupPollAt?: string;
 }
 
+export interface ReportInsights {
+  generatedAt?: string;
+  run?: RunSummary;
+  emails: EmailRecord[];
+}
+
 export interface ReportSummary {
   name: string;
   format: "json" | "csv";
   createdAt: string;
   size: number;
+  insights?: ReportInsights;
 }
 
 export interface RelayRegisterRequest {

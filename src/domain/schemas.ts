@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const timestampSchema = z.string().refine(
+export const timestampSchema = z.string().refine(
   (value) => Number.isFinite(Date.parse(value)),
   "Expected an ISO-compatible timestamp.",
 );
