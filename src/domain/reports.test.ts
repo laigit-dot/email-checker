@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { EmailRecord } from "../shared/contracts";
+import type { EmailRecord, RunSummary } from "../shared/contracts";
 import { serializeCsvReport, serializeJsonReport } from "./reports";
 
 const record: EmailRecord = {
@@ -29,13 +29,28 @@ const record: EmailRecord = {
   },
 };
 
+const run: RunSummary = {
+  startedAt: "2026-08-11T10:00:00.000Z",
+  finishedAt: "2026-08-11T12:00:00.000Z",
+  accountCount: 1,
+  processedCount: 1,
+  counts: {
+    total: 1,
+    unread: 1,
+    organized: 1,
+    failed: 1,
+    urgent: 1,
+  },
+};
+
 describe("report serialization", () => {
   it("serializes independent status flags and totals to JSON", () => {
     const report = JSON.parse(
-      serializeJsonReport([record], "2026-08-11T12:00:00.000Z"),
+      serializeJsonReport([record], "2026-08-11T12:00:00.000Z", run),
     );
 
     expect(report.generatedAt).toBe("2026-08-11T12:00:00.000Z");
+    expect(report.run).toEqual(run);
     expect(report.counts).toEqual({
       total: 1,
       unread: 1,

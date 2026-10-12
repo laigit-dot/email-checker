@@ -1,13 +1,51 @@
-import { mkdir, readdir, stat, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, stat, writeFile } from "node:fs/promises";
 import { basename, join } from "node:path";
 
-import type { EmailRecord, ReportSummary, RunSummary } from "../../shared/contracts.js";
+import { z } from "zod";
+
 import {
+  emailHistorySchema,
+  timestampSchema,
+} from "../../domain/schemas.js";
+import type {
+  EmailRecord,
+  ReportInsights,
+  ReportSummary,
+  RunSummary,
+} from "../../shared/contracts.js";
+import {
+  getReportRunEmails,
   serializeCsvReport,
   serializeJsonReport,
 } from "../../domain/reports.js";
 
 const reportNamePattern = /^run-\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z\.(json|csv)$/;
+const statusCountsSchema = z
+  .object({
+    total: z.number().int().nonnegative(),
+    unread: z.number().int().nonnegative(),
+    organized: z.number().int().nonnegative(),
+    failed: z.number().int().nonnegative(),
+    urgent: z.number().int().nonnegative(),
+  })
+  .strict();
+const runSummarySchema = z
+  .object({
+    startedAt: timestampSchema,
+    finishedAt: timestampSchema.optional(),
+    accountCount: z.number().int().nonnegative(),
+    processedCount: z.number().int().nonnegative(),
+    counts: statusCountsSchema,
+    error: z.string().optional(),
+  })
+  .strict();
+const reportInsightsSchema = z
+  .object({
+    generatedAt: timestampSchema.optional(),
+    run: runSummarySchema.optional(),
+    emails: emailHistorySchema,
+  })
+  .strip();
 
 export function validateSlackWebhook(value: string): URL {
   const url = new URL(value);
@@ -31,8 +69,14 @@ export class ReportService {
 
   public async write(
     records: readonly EmailRecord[],
-    generatedAt = new Date(),
+    generatedAtOrRun: Date | RunSummary = new Date(),
   ): Promise<ReportSummary[]> {
+    const run =
+      generatedAtOrRun instanceof Date ? undefined : generatedAtOrRun;
+    const generatedAt =
+      generatedAtOrRun instanceof Date
+        ? generatedAtOrRun
+        : new Date(generatedAtOrRun.finishedAt ?? Date.now());
     await mkdir(this.reportsDirectory, { recursive: true });
     const stem = `run-${generatedAt
       .toISOString()
@@ -43,7 +87,7 @@ export class ReportService {
     await Promise.all([
       writeFile(
         join(this.reportsDirectory, jsonName),
-        serializeJsonReport(records, generatedAt.toISOString()),
+        serializeJsonReport(records, generatedAt.toISOString(), run),
         "utf8",
       ),
       writeFile(
@@ -71,8 +115,19 @@ export class ReportService {
         };
       }),
     );
-    return reports.sort(
+    const sortedReports = reports.sort(
       (left, right) => Date.parse(right.createdAt) - Date.parse(left.createdAt),
+    );
+    const latestJson = sortedReports.find((report) => report.format === "json");
+    if (!latestJson) {
+      return sortedReports;
+    }
+
+    const insights = await this.readInsights(latestJson.name);
+    return sortedReports.map((report) =>
+      report.name === latestJson.name && insights
+        ? { ...report, insights }
+        : report,
     );
   }
 
@@ -81,6 +136,31 @@ export class ReportService {
       return undefined;
     }
     return join(this.reportsDirectory, name);
+  }
+
+  private async readInsights(name: string): Promise<ReportInsights | undefined> {
+    try {
+      const parsed: unknown = JSON.parse(
+        await readFile(join(this.reportsDirectory, name), "utf8"),
+      );
+      const result = reportInsightsSchema.safeParse(parsed);
+      if (!result.success) {
+        return undefined;
+      }
+      return {
+        ...(result.data.generatedAt
+          ? { generatedAt: result.data.generatedAt }
+          : {}),
+        ...(result.data.run ? { run: result.data.run } : {}),
+        emails: getReportRunEmails(
+          result.data.emails,
+          result.data.run,
+          result.data.generatedAt,
+        ),
+      };
+    } catch {
+      return undefined;
+    }
   }
 
   public async sendSlackSummary(

@@ -4,6 +4,12 @@ import type {
   RunCheckpoint,
   StatusCounts,
 } from "../shared/contracts";
+import {
+  clusterNewlyProcessedEmails,
+  findUrgentOrganizedEmails,
+  getLatestRunEmails,
+  getReportRunEmails,
+} from "../domain/reports";
 
 export type StatusKey = keyof EmailStatus;
 
@@ -96,3 +102,10 @@ export function runProgress(
     max: checkpoint.queuedCount,
   };
 }
+
+export {
+  clusterNewlyProcessedEmails,
+  findUrgentOrganizedEmails,
+  getLatestRunEmails,
+  getReportRunEmails,
+};

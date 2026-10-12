@@ -63,13 +63,17 @@ export interface StatusCounts {
   urgent: number;
 }
 
+export interface FolderRule {
+  name: string;
+  prompt: string;
+}
+
 export interface OrganizerSettings {
   aiProvider: AiProvider;
   ollamaUrl: string;
   model: string;
-  prompt: string;
   selectedAccountIds: string[];
-  folders: string[];
+  folders: FolderRule[];
   rootFolder: string;
   confidenceThreshold: number;
   scanLimit: number;
@@ -206,11 +210,18 @@ export interface MonitoringState {
   nextBackupPollAt?: string;
 }
 
+export interface ReportInsights {
+  generatedAt?: string;
+  run?: RunSummary;
+  emails: EmailRecord[];
+}
+
 export interface ReportSummary {
   name: string;
   format: "json" | "csv";
   createdAt: string;
   size: number;
+  insights?: ReportInsights;
 }
 
 export interface RelayRegisterRequest {

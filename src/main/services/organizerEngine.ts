@@ -175,7 +175,7 @@ export class OrganizerEngine {
       markAsRead: settings.markAsRead,
       scanLimit: settings.scanLimit,
       rootFolder: settings.rootFolder,
-      folders: settings.folders,
+      folders: settings.folders.map((folder) => folder.name),
       confidenceThreshold: settings.confidenceThreshold,
       aiProvider: settings.aiProvider,
       model: settings.model,

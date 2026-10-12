@@ -4,7 +4,11 @@ import { join } from "node:path";
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { firstExistingPath, resolveAppIconFiles } from "./appIcon";
+import {
+  firstExistingPath,
+  resolveAppIconFiles,
+  trayIconPixelSize,
+} from "./appIcon";
 
 describe("app icon files", () => {
   let directory: string;
@@ -57,5 +61,12 @@ describe("app icon files", () => {
       windowIcon: join(directory, "icon.png"),
       notificationIcon: join(directory, "icon.png"),
     });
+  });
+
+  it("sizes the tray icon for the display scale", () => {
+    expect(trayIconPixelSize(1)).toBe(16);
+    expect(trayIconPixelSize(1.5)).toBe(24);
+    expect(trayIconPixelSize(2)).toBe(32);
+    expect(trayIconPixelSize(0)).toBe(16);
   });
 });
