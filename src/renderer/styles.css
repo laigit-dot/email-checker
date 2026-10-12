@@ -240,19 +240,24 @@ samp {
 }
 
 .brand-mark {
-  display: grid;
-  width: 27px;
-  height: 27px;
+  display: block;
+  width: 22px;
+  height: 22px;
   flex: 0 0 auto;
-  place-items: center;
-  border: 1px solid rgba(124, 205, 255, 0.36);
-  border-radius: 9px;
-  color: #e7f7ff;
-  background:
-    linear-gradient(145deg, rgba(40, 161, 255, 0.92), rgba(91, 73, 232, 0.92));
-  box-shadow:
-    0 0 18px rgba(27, 151, 255, 0.35),
-    inset 0 1px rgba(255, 255, 255, 0.25);
+  overflow: hidden;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  box-shadow: none;
+  line-height: 0;
+}
+
+.brand-mark img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
 }
 
 .titlebar__live {
@@ -339,36 +344,31 @@ samp {
 }
 
 .sidebar__workspace-icon {
-  display: grid;
+  display: block;
   width: 31px;
   height: 31px;
   flex: 0 0 auto;
-  place-items: center;
-  border-radius: 10px;
-  color: #84e9ff;
-  background: linear-gradient(145deg, rgba(27, 153, 255, 0.22), rgba(130, 86, 255, 0.2));
-  box-shadow: 0 0 16px rgba(25, 164, 255, 0.14);
+  overflow: hidden;
+  border-radius: 9px;
+  background: transparent;
+  box-shadow: none;
   line-height: 0;
-  overflow: visible;
-  text-overflow: unset;
-  white-space: normal;
   transition:
-    color var(--motion-fast) var(--ease-standard),
-    background-color var(--motion-fast) var(--ease-standard),
     box-shadow var(--motion-medium) var(--ease-standard),
     transform var(--motion-medium) var(--ease-emphasized);
 }
 
-.sidebar__workspace-icon svg {
+.sidebar__workspace-icon img {
   display: block;
-  width: 17px;
-  height: 17px;
-  margin: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
 }
 
 .sidebar__workspace:hover .sidebar__workspace-icon {
-  box-shadow: 0 0 24px rgba(25, 164, 255, 0.25);
-  transform: rotate(-4deg) scale(1.04);
+  box-shadow: 0 0 24px rgba(79, 122, 116, 0.35);
+  transform: scale(1.04);
 }
 
 .sidebar__workspace div,
@@ -2419,6 +2419,62 @@ h3 {
   grid-column: 1 / -1;
 }
 
+.folder-rules {
+  margin-top: 12px;
+}
+
+.folder-rules__heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.folder-rules__heading small {
+  display: block;
+  margin-top: 4px;
+  color: #667b96;
+}
+
+.folder-rules > small {
+  display: block;
+  margin-top: 4px;
+  color: #667b96;
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+.folder-rules__add {
+  flex: 0 0 auto;
+}
+
+.folder-rules__list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.folder-rule-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) auto;
+  gap: 8px;
+  align-items: start;
+}
+
+.folder-rule-row__name {
+  width: 100%;
+}
+
+.folder-rule-row__prompt {
+  width: 100%;
+  resize: vertical;
+}
+
+.folder-rule-row__remove {
+  margin-top: 1px;
+}
+
 .form-field__label {
   color: #9aabc0;
   font-size: 10px;
@@ -2427,7 +2483,9 @@ h3 {
 
 .form-field .input,
 .form-field .textarea,
-.form-field .select {
+.form-field .select,
+.folder-rule-row .input,
+.folder-rule-row .textarea {
   width: 100%;
   border-color: rgba(93, 153, 225, 0.17);
   color: #d9e5f4;
@@ -2446,12 +2504,14 @@ h3 {
 }
 
 .form-field .input,
-.form-field .select {
+.form-field .select,
+.folder-rule-row__name {
   min-height: 42px;
 }
 
-.form-field .textarea {
-  min-height: 96px;
+.form-field .textarea,
+.folder-rule-row__prompt {
+  min-height: 72px;
   padding: 10px;
   resize: vertical;
   line-height: 1.5;
@@ -3562,12 +3622,9 @@ h3 {
 }
 
 .window-shell[data-theme="emailglass"] .brand-mark {
-  border-color: rgba(255, 255, 255, 0.7);
-  color: white;
-  background: linear-gradient(145deg, var(--mist-sage), var(--mist-blue));
-  box-shadow:
-    0 8px 20px rgba(5, 150, 105, 0.4),
-    inset 0 1px rgba(255, 255, 255, 0.5);
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .window-shell[data-theme="emailglass"] .titlebar__controls .btn {
@@ -3596,7 +3653,11 @@ h3 {
   background: rgba(255, 255, 255, 0.92);
 }
 
-.window-shell[data-theme="emailglass"] .sidebar__workspace-icon,
+.window-shell[data-theme="emailglass"] .sidebar__workspace-icon {
+  background: transparent;
+  box-shadow: none;
+}
+
 .window-shell[data-theme="emailglass"] .sidebar__nav-icon {
   color: var(--mist-sage-deep);
   background: rgba(5, 150, 105, 0.16);
@@ -4445,7 +4506,9 @@ h3 {
 
 .window-shell[data-theme="emailglass"] .form-field .input,
 .window-shell[data-theme="emailglass"] .form-field .textarea,
-.window-shell[data-theme="emailglass"] .form-field .select {
+.window-shell[data-theme="emailglass"] .form-field .select,
+.window-shell[data-theme="emailglass"] .folder-rule-row .input,
+.window-shell[data-theme="emailglass"] .folder-rule-row .textarea {
   border-color: rgba(7, 27, 29, 0.18);
   color: var(--mist-ink);
   background: rgba(255, 255, 255, 0.85);
@@ -4814,7 +4877,9 @@ h3 {
 
 .window-shell[data-theme="emailglass"] .form-field .input,
 .window-shell[data-theme="emailglass"] .form-field .textarea,
-.window-shell[data-theme="emailglass"] .form-field .select {
+.window-shell[data-theme="emailglass"] .form-field .select,
+.window-shell[data-theme="emailglass"] .folder-rule-row .input,
+.window-shell[data-theme="emailglass"] .folder-rule-row .textarea {
   background: #f5f9f8;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
@@ -5253,6 +5318,10 @@ h3 {
     grid-template-columns: 1fr;
   }
 
+  .folder-rule-row {
+    grid-template-columns: 1fr;
+  }
+
   .connected-list article {
     align-items: flex-start;
     flex-wrap: wrap;
@@ -5312,19 +5381,17 @@ html:has(.window-shell--peek) #root {
 .edge-peek {
   position: relative;
   display: grid;
-  width: 56px;
-  height: 56px;
+  width: 52px;
+  height: 52px;
   place-items: center;
   padding: 0;
   overflow: visible;
   appearance: none;
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  border-radius: 50%;
+  border: 0;
+  border-radius: 16px;
   color: white;
-  background: linear-gradient(165deg, #059669, #0d9488 58%, #2563eb);
-  box-shadow:
-    0 10px 26px rgba(5, 150, 105, 0.42),
-    inset 0 1px rgba(255, 255, 255, 0.4);
+  background: transparent;
+  box-shadow: none;
   cursor: pointer;
   transform-origin: left center;
 }
@@ -5338,7 +5405,7 @@ html:has(.window-shell--peek) #root {
 }
 
 .edge-peek:hover {
-  background: linear-gradient(165deg, #047857, #0891b2 58%, #1d4ed8);
+  background: transparent;
 }
 
 .edge-peek:hover .brand-mark {
@@ -5348,19 +5415,19 @@ html:has(.window-shell--peek) #root {
 .edge-peek .brand-mark {
   position: relative;
   z-index: 1;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  border-color: rgba(255, 255, 255, 0.55);
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.08));
-  box-shadow: inset 0 1px rgba(255, 255, 255, 0.35);
+  width: 52px;
+  height: 52px;
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+  box-shadow: 0 10px 26px rgba(79, 122, 116, 0.42);
   transition: transform var(--motion-fast) var(--ease-emphasized);
 }
 
 .edge-peek__ripple {
   position: absolute;
   inset: 0;
-  border: 2px solid rgba(255, 255, 255, 0.48);
+  border: 2px solid rgba(79, 122, 116, 0.55);
   border-radius: 50%;
   pointer-events: none;
   animation: peek-ripple 2.6s cubic-bezier(0.22, 0.61, 0.36, 1) infinite;

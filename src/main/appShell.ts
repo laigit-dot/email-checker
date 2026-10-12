@@ -33,6 +33,7 @@ import {
   SIDEBAR_SLIDE_MS,
   type ScreenRect,
 } from "./edgePeek.js";
+import { trayIconPixelSize } from "./appIcon.js";
 import { loadWithRetry } from "./windowLoading.js";
 
 export type ShellWindowRoute = "main" | "floating" | "sidebar" | "peek";
@@ -113,9 +114,22 @@ function loadNativeIcon(path: string): NativeImage | string {
   return image.isEmpty() ? path : image;
 }
 
+function loadTrayIcon(path: string): NativeImage | string {
+  const image = nativeImage.createFromPath(path);
+  if (image.isEmpty()) {
+    return path;
+  }
+
+  const size = trayIconPixelSize(screen.getPrimaryDisplay().scaleFactor);
+  return image.resize({ width: size, height: size, quality: "best" });
+}
+
 export function createAppShell(options: AppShellOptions): AppShell {
   const windowIcon = loadNativeIcon(options.iconPath);
   const notificationIcon = loadNativeIcon(
+    options.notificationIconPath ?? options.iconPath,
+  );
+  const trayIcon = loadTrayIcon(
     options.notificationIconPath ?? options.iconPath,
   );
   const ownedWindows = new Set<BrowserWindow>();
@@ -303,6 +317,20 @@ export function createAppShell(options: AppShellOptions): AppShell {
       enableNativeWindowShadow(window);
     });
     preventCloseUnlessQuitting(window);
+    let sidebarHasBeenFocused = false;
+    window.on("focus", () => {
+      sidebarHasBeenFocused = true;
+    });
+    window.on("hide", () => {
+      sidebarHasBeenFocused = false;
+    });
+    window.on("blur", () => {
+      // Auto-hide the sidebar once it loses focus after having been focused.
+      if (sidebarWindow === window && sidebarOpen && sidebarHasBeenFocused) {
+        sidebarHasBeenFocused = false;
+        hideSidebar();
+      }
+    });
     window.once("closed", () => {
       if (sidebarWindow === window) {
         sidebarWindow = null;
@@ -781,7 +809,7 @@ export function createAppShell(options: AppShellOptions): AppShell {
 
   const startBackgroundUi = (runtime: TrayRuntime): void => {
     if (!tray) {
-      tray = new Tray(windowIcon);
+      tray = new Tray(trayIcon);
       tray.setToolTip("Email Checker");
       tray.on("click", () => showMainWindow());
     }

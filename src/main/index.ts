@@ -26,6 +26,10 @@ import type {
 } from "../shared/contracts.js";
 import { resolveSelectedAccountIds } from "../shared/accountSelection.js";
 import { resolveAppIconFiles } from "./appIcon.js";
+import {
+  installWindowsNotificationShortcut,
+  windowsAppUserModelId,
+} from "./windowsAppIdentity.js";
 import { createAppShell, type ShellWindowRoute } from "./appShell.js";
 import { parseAllowedEmailUrl } from "./openEmail.js";
 import { ApplicationStateService } from "./services/applicationState.js";
@@ -621,14 +625,17 @@ async function createRuntime(userDataPath: string): Promise<RuntimeServices> {
             markAsRead: settings.markAsRead,
             scanLimit: settings.scanLimit,
             rootFolder: settings.rootFolder,
-            folders: settings.folders,
+            folders: settings.folders.map((folder) => folder.name),
             confidenceThreshold: settings.confidenceThreshold,
             aiProvider: settings.aiProvider,
             model: settings.model,
             ollamaUrl: settings.ollamaUrl,
             azureClientConfigured: Boolean(settings.azureClientId),
             googleClientConfigured: Boolean(settings.googleClientId),
-            promptChars: settings.prompt.length,
+            folderDefinitionChars: settings.folders.reduce(
+              (total, folder) => total + folder.prompt.length,
+              0,
+            ),
           });
           if (unmatchedSelectedIds.length > 0) {
             logOrganizer("warn", "run.selected-ids.unmatched", {
@@ -984,7 +991,7 @@ app.on("window-all-closed", () => {
 
 app.whenReady().then(async () => {
   if (process.platform === "win32") {
-    app.setAppUserModelId("com.codeshop.emailchecker");
+    app.setAppUserModelId(windowsAppUserModelId(app.isPackaged));
   }
   const userDataPath = app.getPath("userData");
   const runtime = await createRuntime(userDataPath);
@@ -996,6 +1003,18 @@ app.whenReady().then(async () => {
   const appIcons = resolveAppIcons();
   if (process.platform === "darwin") {
     app.dock?.setIcon(appIcons.windowIcon);
+  }
+  if (process.platform === "win32") {
+    installWindowsNotificationShortcut(
+      (shortcutPath, details) => shell.writeShortcutLink(shortcutPath, details),
+      {
+        appDataPath: app.getPath("appData"),
+        execPath: process.execPath,
+        appPath: app.getAppPath(),
+        iconPath: appIcons.ico ?? appIcons.png ?? appIcons.windowIcon,
+        packaged: app.isPackaged,
+      },
+    );
   }
   const appShell = createAppShell({
     iconPath: appIcons.windowIcon,

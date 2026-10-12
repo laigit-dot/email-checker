@@ -63,13 +63,17 @@ export interface StatusCounts {
   urgent: number;
 }
 
+export interface FolderRule {
+  name: string;
+  prompt: string;
+}
+
 export interface OrganizerSettings {
   aiProvider: AiProvider;
   ollamaUrl: string;
   model: string;
-  prompt: string;
   selectedAccountIds: string[];
-  folders: string[];
+  folders: FolderRule[];
   rootFolder: string;
   confidenceThreshold: number;
   scanLimit: number;

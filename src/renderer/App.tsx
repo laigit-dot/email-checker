@@ -8,6 +8,8 @@ import {
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
+
+import appIconUrl from "./assets/app-icon.png";
 import {
   Activity,
   AlertCircle,
@@ -37,6 +39,7 @@ import {
   Mail,
   Maximize2,
   Play,
+  Plus,
   Radio,
   RefreshCw,
   Settings2,
@@ -62,6 +65,7 @@ import type {
   EmailRecord,
   AiModelOption,
   AiProvider,
+  FolderRule,
   MonitoringState,
   OrganizerRunPhase,
   OrganizerSecretName,
@@ -355,10 +359,14 @@ function useLocalClock() {
   };
 }
 
+function AppLogo() {
+  return <img alt="" draggable={false} src={appIconUrl} />;
+}
+
 function BrandMark() {
   return (
     <span className="brand-mark" aria-hidden="true">
-      <Mail size={16} strokeWidth={2.2} />
+      <AppLogo />
     </span>
   );
 }
@@ -1458,6 +1466,80 @@ function ToggleOption({
   );
 }
 
+function FolderRulesEditor({
+  rules,
+  onChange,
+}: {
+  rules: FolderRule[];
+  onChange: (rules: FolderRule[]) => void;
+}) {
+  const updateRule = (index: number, patch: Partial<FolderRule>) => {
+    onChange(
+      rules.map((rule, position) =>
+        position === index ? { ...rule, ...patch } : rule,
+      ),
+    );
+  };
+  const removeRule = (index: number) => {
+    onChange(rules.filter((_, position) => position !== index));
+  };
+  const addRule = () => {
+    onChange([...rules, { name: "", prompt: "" }]);
+  };
+
+  return (
+    <div className="folder-rules">
+      <div className="folder-rules__heading">
+        <span className="form-field__label">Folders & definitions</span>
+        <button
+          className="btn btn-ghost btn-sm folder-rules__add"
+          type="button"
+          onClick={addRule}
+        >
+          <Plus size={14} aria-hidden="true" />
+          Add folder
+        </button>
+      </div>
+      <small>
+        Each folder needs its own definition of which emails belong there. The
+        AI evaluates folders in this order, top to bottom, and the list must
+        include a &quot;Review&quot; fallback folder.
+      </small>
+      <div className="folder-rules__list">
+        {rules.map((rule, index) => (
+          <div className="folder-rule-row" key={index}>
+            <input
+              className="input input-bordered folder-rule-row__name"
+              type="text"
+              placeholder="Folder name"
+              value={rule.name}
+              onChange={(event) =>
+                updateRule(index, { name: event.target.value })
+              }
+            />
+            <textarea
+              className="textarea textarea-bordered folder-rule-row__prompt"
+              placeholder="Define which emails belong in this folder…"
+              value={rule.prompt}
+              onChange={(event) =>
+                updateRule(index, { prompt: event.target.value })
+              }
+            />
+            <button
+              className="btn btn-ghost btn-square btn-sm folder-rule-row__remove"
+              type="button"
+              aria-label={`Remove ${rule.name || "folder"}`}
+              onClick={() => removeRule(index)}
+            >
+              <X size={14} aria-hidden="true" />
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function PageIntro({
   copy,
   eyebrow,
@@ -2323,18 +2405,6 @@ function RulesSection({
                 </small>
               )}
             </label>
-
-            <label className="form-field form-field--wide">
-              <span className="form-field__label">Classification prompt</span>
-              <textarea
-                className="textarea textarea-bordered"
-                value={settings.prompt}
-                onChange={(event) =>
-                  setSettings({ ...settings, prompt: event.target.value })
-                }
-              />
-              <small>Only sanitized message fields are supplied to this prompt.</small>
-            </label>
           </div>
         </article>
 
@@ -2348,21 +2418,11 @@ function RulesSection({
               <p>Control folders, confidence, and safe message handling.</p>
             </div>
           </header>
+          <FolderRulesEditor
+            rules={settings.folders}
+            onChange={(folders) => setSettings({ ...settings, folders })}
+          />
           <div className="form-grid">
-            <Field
-              label="Folders (comma separated)"
-              value={settings.folders.join(", ")}
-              onChange={(value) =>
-                setSettings({
-                  ...settings,
-                  folders: value
-                    .split(",")
-                    .map((item) => item.trim())
-                    .filter(Boolean),
-                })
-              }
-              hint="Must include Review."
-            />
             <Field
               label="Root folder / label"
               value={settings.rootFolder}
@@ -2762,7 +2822,7 @@ function Sidebar({
       <div>
         <div className="sidebar__workspace">
           <span className="sidebar__workspace-icon" aria-hidden="true">
-            <Sparkles size={17} />
+            <AppLogo />
           </span>
           <div className="nav-copy">
             <strong>Inbox OS</strong>

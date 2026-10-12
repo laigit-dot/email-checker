@@ -11,9 +11,12 @@ const settings: OrganizerSettings = {
   aiProvider: "ollama",
   ollamaUrl: "http://127.0.0.1:11434",
   model: "qwen3:8b",
-  prompt: "Classify safely.",
   selectedAccountIds: [],
-  folders: ["Action Required", "Receipts", "Review"],
+  folders: [
+    { name: "Action Required", prompt: "Needs a timely reply or decision." },
+    { name: "Receipts", prompt: "Purchase or invoice confirmations." },
+    { name: "Review", prompt: "Uncertain or low-confidence classification." },
+  ],
   rootFolder: "AI Organized",
   confidenceThreshold: 0.65,
   scanLimit: 25,
@@ -89,6 +92,17 @@ describe("OllamaClassifier", () => {
     expect(userContent).toContain('"sender":"vendor@example.com"');
     expect(userContent).toContain('"bodyPreview":"Your invoice total is $25."');
     expect(userContent).not.toContain("webUrl");
+
+    const systemContent = request.messages[0]?.content ?? "";
+    expect(systemContent).toContain(
+      '- "Action Required": Needs a timely reply or decision.',
+    );
+    expect(systemContent).toContain(
+      '- "Receipts": Purchase or invoice confirmations.',
+    );
+    expect(systemContent).toContain(
+      `below ${settings.confidenceThreshold}`,
+    );
     expect(userContent).not.toContain("message-1");
   });
 

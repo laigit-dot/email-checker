@@ -39,3 +39,10 @@ export function resolveAppIconFiles(
   const notificationIcon = png ?? ico ?? windowIcon;
   return { ico, png, windowIcon, notificationIcon };
 }
+
+/** Windows tray icons are drawn at the small-icon metric, about 16px times the DPI scale. */
+export function trayIconPixelSize(scaleFactor: number): number {
+  const scale =
+    Number.isFinite(scaleFactor) && scaleFactor > 0 ? scaleFactor : 1;
+  return Math.max(16, Math.round(16 * scale));
+}

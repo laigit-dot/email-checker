@@ -12,6 +12,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import type { EmailRecord } from "../shared/contracts";
 import {
+  DEFAULT_FOLDER_RULES,
   DEFAULT_ORGANIZER_SETTINGS,
   JsonSettingsStore,
 } from "./services/settingsStore";
@@ -68,14 +69,7 @@ describe("main-process persistence", () => {
         dryRun: true,
         markAsRead: false,
         unreadOnly: true,
-        folders: [
-          "Action Required",
-          "Receipts",
-          "Newsletters",
-          "Updates",
-          "Personal",
-          "Review",
-        ],
+        folders: DEFAULT_FOLDER_RULES,
         scanLimit: 25,
       }),
     );
